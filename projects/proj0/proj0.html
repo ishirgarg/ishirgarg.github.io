@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project 0: Camera & Perspective</title>
+    <meta name="description" content="Project 0 details and instructions." />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .prose h2 {
+            margin-top: 3rem;
+            font-size: 1.875rem;
+            /* text-3xl */
+        }
+
+        .prose h3 {
+            margin-top: 2rem;
+            font-size: 1.25rem;
+            /* text-xl */
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/80 dark:bg-gray-950/70 backdrop-blur">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight">Project
+                0: Camera & Perspective</h1>
+            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">By
+                Ishir Garg</div>
+        </div>
+    </header>
+
+    <main
+        class="max-w-4xl mx-auto px-4 py-8 prose prose-gray dark:prose-invert">
+        <h2>Part 1: Selfie — The Wrong Way vs. The Right Way</h2>
+        <p>Take a picture of your friend (or yourself) from close up. You get a
+            typical distorted selfie image. Now step back several feet from your
+            subject, zoom in, and take a second picture. Try to get the face in
+            the second photo to be the same size as in the first photo. If
+            you've done things right, the second portrait should look much
+            better than the first one. Think about why this is.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <figure>
+                <img src="images/selfie-close.jpg"
+                    alt="Close-up distorted selfie" class="rounded-lg shadow" />
+                <figcaption class="text-sm text-gray-500">Close-up selfie (wrong
+                    way)</figcaption>
+            </figure>
+            <figure>
+                <img src="images/selfie-zoomed.jpg"
+                    alt="Zoomed-in selfie from farther away"
+                    class="rounded-lg shadow" />
+                <figcaption class="text-sm text-gray-500">Zoomed-in selfie
+                    (right way)</figcaption>
+            </figure>
+        </div>
+
+        <h3>Observations</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>The closed-up selfie compresses my face horizontally, whereas the
+                farther away but zoomed in selfie looks more natural and
+                realistic.</p>
+        </div>
+
+        <h3>Analysis</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>This happens because when the camera lens is close to my face,
+                some parts of my face are disproportionately closer to the lens.
+                As a result, some facial features seem larger than others. When
+                the camera is farther away, but zoomed, these differences in
+                distance are geometrically less, and are not exaggerated.</p>
+        </div>
+
+        <h2>Part 2: Architectural Perspective Compression</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <figure>
+                <img src="images/street-zoomed.jpg" alt="Zoomed-in street view"
+                    class="rounded-lg shadow" />
+                <figcaption class="text-sm text-gray-500">Zoomed-in street view
+                    (compressed)</figcaption>
+            </figure>
+            <figure>
+                <img src="images/street-wide.jpg" alt="Wide-angle street view"
+                    class="rounded-lg shadow" />
+                <figcaption class="text-sm text-gray-500">Wide-angle street view
+                </figcaption>
+            </figure>
+        </div>
+
+        <h3>Observations</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>The zoomed in image looks much flatter and more compressed than
+                the image taken without zoom.</p>
+        </div>
+
+        <h3>Analysis</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>This is a similar effect to the previous part. When we stand
+                farther away, near and far away objects subtend a similar angle
+                in the field of view, so they look more similar in size and
+                distance. When we go closer and don't zoom in however, there are
+                more drastic differences in the angle subtended by nearby versus
+                far objects, exaggerating their differences and creating more
+                depth. </p>
+        </div>
+
+        <h2>Part 3: The Dolly Zoom</h2>
+        <figure>
+            <img src="images/dollyzoom.gif" alt="Dolly zoom animated GIF"
+                class="rounded-lg shadow" />
+            <figcaption class="text-sm text-gray-500">Example dolly zoom
+                sequence</figcaption>
+        </figure>
+    </main>
+
+    <footer
+        class="max-w-4xl mx-auto px-4 pb-10 pt-6 text-sm text-gray-500 dark:text-gray-400">
+        <a href="index.html"
+            class="text-indigo-600 dark:text-indigo-400 hover:underline">← Back
+            to Index</a>
+        <p class="mt-2">&copy; <span id="year"></span> Ishir Garg. All rights
+            reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CS 180 Projects</title>
+    <meta name="description" content="Simple project index with cards." />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans"]
+                    },
+                    boxShadow: { soft: "0 10px 25px -15px rgba(0,0,0,0.25)" },
+                },
+                container: { center: true, padding: "1rem" }
+            },
+            darkMode: 'class'
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .card {
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 45px -15px rgba(0, 0, 0, .3);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/80 dark:bg-gray-950/70 backdrop-blur">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight">My
+                Projects</h1>
+            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">By
+                Ishir Garg</div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <section>
+            <div id="grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            </div>
+        </section>
+    </main>
+
+    <footer
+        class="max-w-6xl mx-auto px-4 pb-10 pt-6 text-sm text-gray-500 dark:text-gray-400">
+        <p>&copy; <span id="year"></span> Ishir Garg. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Project list
+        const projects = [
+            {
+                title: "Project 0: Camera & Perspective",
+                href: "projects/proj0/proj0.html",
+                desc: "Learn about perspective, focal length, and projection by taking photos.",
+                updated: "2025-09-01"
+            },
+
+        ];
+
+        const grid = document.getElementById("grid");
+        function formatDate(iso) {
+            try {
+                const d = new Date(iso + 'T00:00:00');
+                return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch { return iso; }
+        }
+
+        function cardHTML(p) {
+            return `
+        <a href="${p.href}" class="card block rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 p-5 shadow-soft focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <div class="flex items-start justify-between gap-3">
+            <h3 class="text-lg font-semibold leading-tight">${p.title}</h3>
+            <svg class="h-5 w-5 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+          </div>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">${p.desc || ''}</p>
+          <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">Updated ${formatDate(p.updated || '')}</div>
+        </a>`;
+        }
+
+        function renderCards(list) {
+            grid.innerHTML = list.map(cardHTML).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCards(projects);
+            document.getElementById('year').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+
+</html>
