@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project 1: Color Channel Alignment & Enhancements</title>
+    <meta name="description"
+        content="Channel alignment with MSE & Gaussian pyramid, Sobel-based improvement, and artifact-aware auto-cropping." />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- MathJax for equations -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+        }
+
+        .prose h2 {
+            margin-top: 3rem;
+            font-size: 1.875rem;
+        }
+
+        .prose h3 {
+            margin-top: 2rem;
+            font-size: 1.25rem;
+        }
+
+        figcaption {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/80 dark:bg-gray-950/70 backdrop-blur">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight">Project
+                1: Color Channel Alignment & Enhancements</h1>
+            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">By
+                Ishir Garg</div>
+        </div>
+    </header>
+
+    <main
+        class="max-w-5xl mx-auto px-4 py-8 prose prose-gray dark:prose-invert">
+        <!-- Intro -->
+        <h2>Overview</h2>
+        <p>
+            This project reconstructs RGB photographs from
+            <strong>Prokudin-Gorskii</strong> three-channel glass plate images.
+            Each plate contains three exposures (blue, green, red) of the same
+            scene, vertically stacked. Our goal is to align
+            the green and red channels to the blue channel, producing a single
+            coherent color image. To achieve this, we will
+            explore different strategies — from naive MSE alignment to
+            pyramid-based scaling, Sobel-based improvements, and
+            final artifact-aware cropping.
+        </p>
+
+        <!-- Smallest images -->
+        <h2>Small Images (no Gaussian pyramid)</h2>
+        <p>We first display the results of our full algorithm on all images.
+            Below are the reconstructions of the smallest images, aligned
+            without a Gaussian pyramid.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">The following
+            reconstructions use <strong>direct MSE alignment only</strong> (no
+            pyramid).</p>
+        <div id="small-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Note: these <em>do not</em> use
+            the Gaussian pyramid scheme described below.</p>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm">
+                <thead>
+                    <tr
+                        class="border-b border-gray-200/70 dark:border-white/10">
+                        <th class="px-3 py-2 text-left">Image</th>
+                        <th class="px-3 py-2 text-left">Green offset (dx, dy)
+                        </th>
+                        <th class="px-3 py-2 text-left">Red offset (dx, dy)</th>
+                    </tr>
+                </thead>
+                <tbody id="small-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Large images (all) -->
+        <h2>Large Images — Full Set</h2>
+        <div id="large-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm">
+                <thead>
+                    <tr
+                        class="border-b border-gray-200/70 dark:border-white/10">
+                        <th class="px-3 py-2 text-left">Image</th>
+                        <th class="px-3 py-2 text-left">Green offset (dx, dy)
+                        </th>
+                        <th class="px-3 py-2 text-left">Red offset (dx, dy)</th>
+                    </tr>
+                </thead>
+                <tbody id="large-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Large images (chosen subset) -->
+        <h2>My Chosen Highlights from the Prokudin-Gorskii Collection</h2>
+        <div id="chosen-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm">
+                <thead>
+                    <tr
+                        class="border-b border-gray-200/70 dark:border-white/10">
+                        <th class="px-3 py-2 text-left">Image</th>
+                        <th class="px-3 py-2 text-left">Green offset (dx, dy)
+                        </th>
+                        <th class="px-3 py-2 text-left">Red offset (dx, dy)</th>
+                    </tr>
+                </thead>
+                <tbody id="chosen-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Technical Section -->
+        <h2>Technical Details</h2>
+
+        <h3>Part 1 — Brute-force Channel Alignment (MSE)</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>
+                For each image, I aligned the green and red channels to the blue
+                channel by scanning integer offsets in
+                the window \([-15, 15]\) for both axes. Before scoring, I
+                cropped <strong>10% from each border</strong> of both channels
+                to
+                avoid frame artifacts. The similarity metric is mean squared
+                error (MSE) between the overlapped regions:
+            </p>
+            <p class="mt-2">$\displaystyle \mathrm{MSE}(A,B) =
+                \frac{1}{N}\sum_{p\in\Omega}(A(p)-B(p))^2,$ where $\Omega$ is
+                the common support after cropping and shifting, and
+                $N=|\Omega|$.</p>
+            <p>To further improve robustness, I normalized each channel by
+                subtracting its mean and scaling it to have unit variance. This
+                ensured that differences in exposure or brightness between the
+                channels did not bias the alignment process.</p>
+
+            <p>I also implemented Normalized Cross-Correlation (NCC) as an
+                alternative similarity metric. NCC gave results that were
+                qualitatively very similar to MSE. Additionally, I experimented
+                with modifying MSE by fitting a linear regression model between
+                channels and then computing the least-squares loss on the
+                residuals. While this approach accounts for linear intensity
+                differences, it was computationally expensive and did not
+                noticeably improve alignment quality compared to MSE.</p>
+        </div>
+
+        <h3>Part 2 — Multi-scale Alignment with a Gaussian Pyramid</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>
+                To handle large images efficiently and robustly, I constructed a
+                Gaussian pyramid by smoothing with a
+                size-5 Gaussian kernel (noise standard deviation 2 to suppress
+                high-frequency detail), then downsampling
+                by 2 in each dimension (take every other row and column),
+                yielding an image of one quarter the pixels.
+                Offsets computed at a coarse level are scaled by 2 when
+                propagated to the next-finer level, then refined
+                by checking adjacent integer displacements (a local search).
+                Recursively, this descends until the smallest
+                level is about <strong>64&nbsp;px</strong> on the shorter side,
+                where the naive Part&nbsp;1 search is used.
+            </p>
+        </div>
+
+        <h3>Part 3 — Structure-aware Alignment with Sobel Gradients</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>
+                Raw RGB intensities can disagree across channels (e.g., spectral
+                differences), which makes naive MSE alignment
+                brittle. As an improvement on the MSE-based method above, I
+                instead align <em>edges</em> using Sobel gradients.
+                Let $G_x = S_x * I$ and $G_y = S_y * I$, where
+                $S_x = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1
+                \end{bmatrix}$ and
+                $S_y = \begin{bmatrix} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1
+                \end{bmatrix}$.
+                The gradient magnitude is $\|\nabla I\| = \sqrt{G_x^2 + G_y^2}$.
+                I compute these for each channel and align using
+                MSE (or normalized cross-correlation) on the magnitudes, which
+                focuses the search on geometric structure rather than color.
+            </p>
+        </div>
+
+        <figure class="mt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <img src="images/out/emir.jpg"
+                        alt="Emir before Sobel-based alignment"
+                        class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">Before (naive RGB
+                        MSE): <code>images/out/emir.jpg</code></figcaption>
+                </div>
+                <div>
+                    <img src="images/improved_out/emir.jpg"
+                        alt="Emir after Sobel-based alignment"
+                        class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">After (Sobel-based
+                        alignment): <code>images/improved_out/emir.jpg</code>
+                    </figcaption>
+                </div>
+            </div>
+        </figure>
+
+        <h3>Part 4 — Removing Edge Artifacts with Error-aware Auto-cropping</h3>
+        <div
+            class="bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-400 dark:border-indigo-500 p-4 rounded-lg shadow-sm">
+            <p>
+                Mis-registration at the borders (from per-channel shifts) can
+                leave colored frames. To address this, we define a per-pixel
+                error function:
+            </p>
+            <p>
+                $$
+                E(r,g,b) =
+                \begin{cases}
+                (r-g)^2 + (r-b)^2 + (g-b)^2, & \text{if } 0.05 \leq \min(r,g,b)
+                \text{ and } \max(r,g,b) \leq 0.95 \\
+                1, & \text{otherwise}
+                \end{cases}
+                $$
+            </p>
+            <p>
+                For each row and column, we compute the mean error. Starting
+                from each border, we crop inwards while the mean error remains
+                above a chosen threshold. We used <strong>err_thresh =
+                    0.6</strong> and <strong>margin_frac = 0.5</strong>, which
+                restricts cropping to the outer 15% of each side. Note that the
+                reason for the 0.05 and 0.95 thresholds in the first branch of
+                the function is to also assign high error to edges that are
+                all-white or all-black.
+            </p>
+        </div>
+
+        <figure class="mt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <img src="images/improved_out/tobolsk.jpg"
+                        alt="Before cropping" class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">Before cropping:
+                        <code>images/improved_out/tobolsk.jpg</code>
+                    </figcaption>
+                </div>
+                <div>
+                    <img src="images/cropped_out/tobolsk.jpg"
+                        alt="After cropping" class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">After cropping:
+                        <code>images/improved_out/cropped_out/tobolsk.jpg</code>
+                    </figcaption>
+                </div>
+            </div>
+        </figure>
+
+        <figure class="mt-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <img src="images/improved_out/melons.jpg"
+                        alt="Before cropping" class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">Before cropping:
+                        <code>images/improved_out/melons.jpg</code>
+                    </figcaption>
+                </div>
+                <div>
+                    <img src="images/cropped_out/melons.jpg"
+                        alt="After cropping" class="rounded-lg shadow" />
+                    <figcaption class="text-sm text-gray-500">After cropping:
+                        <code>images/cropped_out/melons.jpg</code>
+                    </figcaption>
+                </div>
+            </div>
+        </figure>
+
+    </main>
+
+    <footer
+        class="max-w-5xl mx-auto px-4 pb-10 pt-6 text-sm text-gray-500 dark:text-gray-400">
+        <a href="index.html"
+            class="text-indigo-600 dark:text-indigo-400 hover:underline">← Back
+            to Index</a>
+        <p class="mt-2">&copy; <span id="year"></span> Ishir Garg. All rights
+            reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // ====== DATA YOU CAN EDIT ======
+        const smallImages = [
+            { name: 'cathedral.jpg', g: [2, 5], r: [3, 12] },
+            { name: 'monastery.jpg', g: [2, -3], r: [2, 3] },
+            { name: 'tobolsk.jpg', g: [3, 3], r: [3, 6] },
+        ];
+
+        const largeImagesAll = [
+            { name: 'emir.jpg', g: [24, 49], r: [40, 107] },
+            { name: 'church.jpg', g: [4, 25], r: [-4, 58] },
+            { name: 'harvesters.jpg', g: [17, 60], r: [14, 124] },
+            { name: 'icon.jpg', g: [17, 42], r: [23, 90] },
+            { name: 'italil.jpg', g: [22, 38], r: [36, 77] },
+            { name: 'lastochikino.jpg', g: [-2, -3], r: [-8, 76] },
+            { name: 'lugano.jpg', g: [-17, 41], r: [-29, 92] },
+            { name: 'melons.jpg', g: [11, 81], r: [13, 177] },
+            { name: 'self_portrait.jpg', g: [30, 79], r: [37, 176] },
+            { name: 'siren.jpg', g: [-6, 49], r: [-24, 96] },
+            { name: 'three_generations.jpg', g: [12, 54], r: [9, 111] },
+        ];
+
+        const chosenImages = [
+            { name: 'brick.jpg', g: [9, 71], r: [-29, 155] },
+            { name: 'four_people.jpg', g: [-15, 49], r: [-45, 87] },
+            { name: 'camel.jpg', g: [15, 21], r: [38, 81] },
+            { name: 'urali.jpg', g: [33, 41], r: [58, 94] },
+        ];
+
+
+        const improvedNames = [
+            'tobolsk.jpg',
+            'melons.jpg',
+        ];
+
+        function imgEl(src, alt) {
+            const fig = document.createElement('figure');
+            const img = document.createElement('img');
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.src = src;
+            img.alt = alt;
+            img.className = 'rounded-lg shadow w-full';
+            const cap = document.createElement('figcaption');
+            cap.className = 'text-sm text-gray-500';
+            cap.textContent = alt;
+            fig.appendChild(img);
+            fig.appendChild(cap);
+            return fig;
+        }
+
+        function renderGallery(gridId, rows, baseDir = 'images/cropped_out/') {
+            const grid = document.getElementById(gridId);
+            rows.forEach(({ name }) => {
+                grid.appendChild(imgEl(`${baseDir}${name}`, name));
+            });
+        }
+
+        function renderTable(tbodyId, rows) {
+            const tbody = document.getElementById(tbodyId);
+            rows.forEach(({ name, g, r }) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-200/50 dark:border-white/5';
+                tr.innerHTML = `
+          <td class="px-3 py-2 whitespace-nowrap"><code>${name}</code></td>
+          <td class="px-3 py-2">(${g[0]}, ${g[1]})</td>
+          <td class="px-3 py-2">(${r[0]}, ${r[1]})</td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderImproved(gridId, names) {
+            const grid = document.getElementById(gridId);
+            names.forEach((name) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+                wrap.appendChild(imgEl(`images/improved_out/${name}`, `Non-cropped: ${name}`));
+                wrap.appendChild(imgEl(`images/corpped_out/${name}`, `Cropped: ${name}`));
+                grid.appendChild(wrap);
+            });
+        }
+
+        renderGallery('small-grid', smallImages);
+        renderTable('small-table', smallImages);
+        renderGallery('large-grid', largeImagesAll);
+        renderTable('large-table', largeImagesAll);
+        renderGallery('chosen-grid', chosenImages);
+        renderTable('chosen-table', chosenImages);
+        renderImproved('improved-grid', improvedNames);
+    </script>
+</body>
+
+</html>
