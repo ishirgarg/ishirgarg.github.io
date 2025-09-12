@@ -72,12 +72,58 @@
 
         <!-- Smallest images -->
         <h2>Small Images (no Gaussian pyramid)</h2>
-        <p>We first display the results of our full algorithm on all images.
+        <p>We first display the results of our full algorithm on all images
+            using MSE loss.
             Below are the reconstructions of the smallest images, aligned
-            without a Gaussian pyramid.</p>
+            without a Gaussian pyramid (naive implementation).</p>
         <p class="text-sm text-gray-600 dark:text-gray-400">The following
             reconstructions use <strong>direct MSE alignment only</strong> (no
             pyramid).</p>
+        <div id="small-grid-naive"
+            class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm">
+                <thead>
+                    <tr
+                        class="border-b border-gray-200/70 dark:border-white/10">
+                        <th class="px-3 py-2 text-left">Image</th>
+                        <th class="px-3 py-2 text-left">Green offset (dx, dy)
+                        </th>
+                        <th class="px-3 py-2 text-left">Red offset (dx, dy)</th>
+                    </tr>
+                </thead>
+                <tbody id="small-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Large images (all) -->
+        <h2>Large Images — Full Set</h2>
+        <div id="large-grid-naive"
+            class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm">
+                <thead>
+                    <tr
+                        class="border-b border-gray-200/70 dark:border-white/10">
+                        <th class="px-3 py-2 text-left">Image</th>
+                        <th class="px-3 py-2 text-left">Green offset (dx, dy)
+                        </th>
+                        <th class="px-3 py-2 text-left">Red offset (dx, dy)</th>
+                    </tr>
+                </thead>
+                <tbody id="large-table"></tbody>
+            </table>
+        </div>
+
+        <h2>Small Images (Bells and Whistles Algorithm)</h2>
+        <p>
+            These images use the full algorithm with Sobel-filtering and
+            cropping
+        </p>
+
         <div id="small-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         </div>
         <p class="text-xs text-gray-500 mt-2">Note: these <em>do not</em> use
@@ -98,7 +144,7 @@
         </div>
 
         <!-- Large images (all) -->
-        <h2>Large Images — Full Set</h2>
+        <h2>Large Images (Bells and Whistles Algorithm)</h2>
         <div id="large-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         </div>
         <div class="overflow-x-auto">
@@ -115,7 +161,6 @@
                 <tbody id="large-table"></tbody>
             </table>
         </div>
-
         <!-- Large images (chosen subset) -->
         <h2>My Chosen Highlights from the Prokudin-Gorskii Collection</h2>
         <div id="chosen-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -311,6 +356,34 @@
         document.getElementById('year').textContent = new Date().getFullYear();
 
         // ====== DATA YOU CAN EDIT ======
+        const smallImagesNaive = [
+            { name: 'cathedral.jpg', g: [2, 5], r: [3, 12] },
+            { name: 'monastery.jpg', g: [2, -3], r: [2, 3] },
+            { name: 'tobolsk.jpg', g: [3, 3], r: [3, 6] },
+        ];
+
+        const largeImagesAllNaive = [
+            { name: 'emir.jpg', g: [24, 49], r: [31, 63] },
+            { name: 'church.jpg', g: [4, 25], r: [-4, 58] },
+            { name: 'harvesters.jpg', g: [17, 60], r: [13, 124] },
+            { name: 'icon.jpg', g: [17, 41], r: [23, 89] },
+            { name: 'italil.jpg', g: [21, 38], r: [35, 76] },
+            { name: 'lastochikino.jpg', g: [-2, -3], r: [-9, 75] },
+            { name: 'lugano.jpg', g: [-16, 41], r: [-29, 93] },
+            { name: 'melons.jpg', g: [11, 82], r: [13, 178] },
+            { name: 'self_portrait.jpg', g: [29, 79], r: [37, 176] },
+            { name: 'siren.jpg', g: [-6, 49], r: [-25, 96] },
+            { name: 'three_generations.jpg', g: [14, 53], r: [11, 112] },
+        ];
+
+        const chosenImagesNaive = [
+            { name: 'brick.jpg', g: [8, 72], r: [-27, 193] },
+            { name: 'four_people.jpg', g: [-13, 47], r: [-41, 85] },
+            { name: 'camel.jpg', g: [15, 19], r: [38, 80] },
+            { name: 'urali.jpg', g: [33, 40], r: [59, 94] },
+        ];
+
+
         const smallImages = [
             { name: 'cathedral.jpg', g: [2, 5], r: [3, 12] },
             { name: 'monastery.jpg', g: [2, -3], r: [2, 3] },
@@ -339,6 +412,7 @@
         ];
 
 
+
         const improvedNames = [
             'tobolsk.jpg',
             'melons.jpg',
@@ -358,6 +432,13 @@
             fig.appendChild(img);
             fig.appendChild(cap);
             return fig;
+        }
+
+        function renderGalleryNaive(gridId, rows, baseDir = 'images/out/') {
+            const grid = document.getElementById(gridId);
+            rows.forEach(({ name }) => {
+                grid.appendChild(imgEl(`${baseDir}${name}`, name));
+            });
         }
 
         function renderGallery(gridId, rows, baseDir = 'images/cropped_out/') {
@@ -392,10 +473,13 @@
             });
         }
 
+        renderGalleryNaive('small-grid-naive', smallImagesNaive);
+        renderTable('small-table', smallImagesNaive);
+        renderGalleryNaive('large-grid-naive', largeImagesAllNaive);
+        renderTable('large-table', largeImagesAllNaive);
+
         renderGallery('small-grid', smallImages);
-        renderTable('small-table', smallImages);
         renderGallery('large-grid', largeImagesAll);
-        renderTable('large-table', largeImagesAll);
         renderGallery('chosen-grid', chosenImages);
         renderTable('chosen-table', chosenImages);
         renderImproved('improved-grid', improvedNames);
