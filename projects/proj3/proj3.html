@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 3: Image Warping and Mosaicing</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #7f8c8d;
+            margin-top: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .image-container {
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-caption {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .technical-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #17a2b8;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .large-image {
+            max-width: 1000px;
+            margin: 0 auto 20px auto;
+        }
+
+        .span-all {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Project 3: Image Warping and Mosaicing</h1>
+        <p style="text-align: center; font-size: 18px; color: #7f8c8d;">By Ishir
+            Garg</p>
+
+        <div class="section">
+            <h2>Overview</h2>
+            <p>This project explores the fundamentals of geometric image
+                transformations, focusing on image warping, homography
+                estimation, and mosaicing.
+                The goal is to register multiple images into a single seamless
+                panorama, illustrating both mathematical and practical
+                challenges in computer vision and computational photography.</p>
+        </div>
+
+        <div class="section">
+            <h2>Part A.1: Acquiring Images</h2>
+            <p>
+                We capture sets of images with significant overlap and a fixed
+                center of projection (COP) while rotating the camera.
+                Recommended overlap is 40–70% to allow accurate registration.
+                Ideal subjects include indoor scenes, forests, or panoramas.
+            </p>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="input/forest1.jpg" alt="Forest 1">
+                    <div class="image-caption">Forest Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="input/forest2.jpg" alt="Forest 2">
+                    <div class="image-caption">Forest Scene 2</div>
+                </div>
+                <div class="image-container">
+                    <img src="input/vlsb1.jpg" alt="VLSB 1">
+                    <div class="image-caption">VLSB Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="input/vlsb2.jpg" alt="VLSB 2">
+                    <div class="image-caption">VLSB Scene 2</div>
+                </div>
+                <div class="image-container">
+                    <img src="input/gather1.jpg" alt="Gather 1">
+                    <div class="image-caption">Gather Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="input/gather2.jpg" alt="Gather 2">
+                    <div class="image-caption">Gather Scene 2</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Part A.2: Homography Recovery</h2>
+
+            <h3>VLSB Scene Homography</h3>
+            <p>
+                Recovered homography matrix $H_\text{VLSB}$:
+                \[
+                H_\text{VLSB} =
+                \begin{bmatrix}
+                0.13569553 & -0.04119560 & 493.498245 \\
+                -0.32904284 & 0.64052135 & 193.330384 \\
+                -0.00060250 & -0.00005936 & 1
+                \end{bmatrix}
+                \]
+            </p>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="input/vlsb1.jpg" alt="Forest 1">
+                    <div class="image-caption">VLSB Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/vlsb_homography_result.jpg" alt="Forest 2">
+                    <div class="image-caption">VLSB Warped by H</div>
+                </div>
+            </div>
+
+            <p>
+                System of equations $A_\text{VLSB} h = 0$:
+            <pre>
+[[-620.0 -84.0 -1.0 0.0 0.0 0.0 566680.0 76776.0 914.0]
+ [0.0 0.0 0.0 -620.0 -84.0 -1.0 42780.0 5796.0 69.0]
+ [-431.0 -310.0 -1.0 0.0 0.0 0.0 324543.0 233430.0 753.0]
+ [0.0 0.0 0.0 -431.0 -310.0 -1.0 148695.0 106950.0 345.0]
+ [-456.0 -318.0 -1.0 0.0 0.0 0.0 353400.0 246450.0 775.0]
+ [0.0 0.0 0.0 -456.0 -318.0 -1.0 158232.0 110346.0 347.0]
+ [-290.0 -194.0 -1.0 0.0 0.0 0.0 185890.0 124354.0 641.0]
+ [0.0 0.0 0.0 -290.0 -194.0 -1.0 80330.0 53738.0 277.0]
+ [-524.0 -736.0 -1.0 0.0 0.0 0.0 432300.0 607200.0 825.0]
+ [0.0 0.0 0.0 -524.0 -736.0 -1.0 401908.0 564512.0 767.0]
+ [-485.0 -763.0 -1.0 0.0 0.0 0.0 380240.0 598192.0 784.0]
+ [0.0 0.0 0.0 -485.0 -763.0 -1.0 380240.0 598192.0 784.0]
+ [-410.0 -365.0 -1.0 0.0 0.0 0.0 301760.0 268640.0 736.0]
+ [0.0 0.0 0.0 -410.0 -365.0 -1.0 163590.0 145635.0 399.0]
+ [-183.0 -362.0 -1.0 0.0 0.0 0.0 105774.0 209236.0 578.0]
+ [0.0 0.0 0.0 -183.0 -362.0 -1.0 77226.0 152764.0 422.0]
+ [-41.0 -344.0 -1.0 0.0 0.0 0.0 20787.0 174408.0 507.0]
+ [0.0 0.0 0.0 -41.0 -344.0 -1.0 17138.0 143792.0 418.0]
+ [-429.0 -544.0 -1.0 0.0 0.0 0.0 324753.0 411808.0 757.0]
+ [0.0 0.0 0.0 -429.0 -544.0 -1.0 243243.0 308448.0 567.0]
+ [-475.0 -551.0 -1.0 0.0 0.0 0.0 380000.0 440800.0 800.0]
+ [0.0 0.0 0.0 -475.0 -551.0 -1.0 273125.0 316825.0 575.0]
+ [-608.0 -565.0 -1.0 0.0 0.0 0.0 561184.0 521495.0 923.0]
+ [0.0 0.0 0.0 -608.0 -565.0 -1.0 364192.0 338435.0 599.0]
+ [-125.0 -377.0 -1.0 0.0 0.0 0.0 68250.0 205842.0 546.0]
+ [0.0 0.0 0.0 -125.0 -377.0 -1.0 54375.0 163995.0 435.0]
+ [-104.0 -377.0 -1.0 0.0 0.0 0.0 55744.0 202072.0 536.0]
+ [0.0 0.0 0.0 -104.0 -377.0 -1.0 45448.0 164749.0 437.0]
+ [-637.0 -185.0 -1.0 0.0 0.0 0.0 598143.0 173715.0 939.0]
+ [0.0 0.0 0.0 -637.0 -185.0 -1.0 107016.0 31080.0 168.0]
+ [-692.0 -176.0 -1.0 0.0 0.0 0.0 700996.0 178288.0 1013.0]
+ [0.0 0.0 0.0 -692.0 -176.0 -1.0 90652.0 23056.0 131.0]
+ [-635.0 -303.0 -1.0 0.0 0.0 0.0 600075.0 286335.0 945.0]
+ [0.0 0.0 0.0 -635.0 -303.0 -1.0 190500.0 90900.0 300.0]
+ [-691.0 -297.0 -1.0 0.0 0.0 0.0 704129.0 302643.0 1019.0]
+ [0.0 0.0 0.0 -691.0 -297.0 -1.0 191407.0 82269.0 277.0]]
+        </pre>
+            </p>
+
+            <h3>Forest Scene Homography</h3>
+            <p>
+                Recovered homography matrix $H_\text{Forest}$:
+                \[
+                H_\text{Forest} =
+                \begin{bmatrix}
+                5.76458 & 0.25238 & -7091.91 \\
+                2.62810 & 4.72590 & -6864.86 \\
+                0.0013809 & 0.0002548 & 1
+                \end{bmatrix}
+                \]
+            </p>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="input/forest1.jpg" alt="Forest 1">
+                    <div class="image-caption">Forest Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/forest_homography_result.jpg"
+                        alt="Forest 2">
+                    <div class="image-caption">Forest Warped by H</div>
+                </div>
+            </div>
+            <p>
+                System of equations $A_\text{Forest} h = 0$:
+            <pre>
+[[-1771.0  -2213.0    -1.0      0.0      0.0      0.0  1609839.0  2011617.0   909.0]
+ [   0.0      0.0      0.0  -1771.0  -2213.0    -1.0  3639405.0  4547715.0  2055.0]
+ [-1877.0  -2383.0    -1.0      0.0      0.0      0.0  1920171.0  2437809.0  1023.0]
+ [   0.0      0.0      0.0  -1877.0  -2383.0    -1.0  4172571.0  5297409.0  2223.0]
+ [-2299.0  -2479.0    -1.0      0.0      0.0      0.0  3257683.0  3512743.0  1417.0]
+ [   0.0      0.0      0.0  -2299.0  -2479.0    -1.0  5221029.0  5629809.0  2271.0]
+ [-1853.0  -3089.0    -1.0      0.0      0.0      0.0  1891913.0  3153869.0  1021.0]
+ [   0.0      0.0      0.0  -1853.0  -3089.0    -1.0  5368141.0  8948833.0  2897.0]
+ [-1319.0  -2269.0    -1.0      0.0      0.0      0.0   420761.0   723811.0   319.0]
+ [   0.0      0.0      0.0  -1319.0  -2269.0    -1.0  2839807.0  4885157.0  2153.0]
+ [-2415.0  -1735.0    -1.0      0.0      0.0      0.0  3653895.0  2625055.0  1513.0]
+ [   0.0      0.0      0.0  -2415.0  -1735.0    -1.0  3890565.0  2795085.0  1611.0]
+ [-2625.0  -1719.0    -1.0      0.0      0.0      0.0  4391625.0  2875887.0  1673.0]
+ [   0.0      0.0      0.0  -2625.0  -1719.0    -1.0  4223625.0  2765871.0  1609.0]
+ [-1591.0  -2247.0    -1.0      0.0      0.0      0.0  1096199.0  1548183.0   689.0]
+ [   0.0      0.0      0.0  -1591.0  -2247.0    -1.0  3349055.0  4729935.0  2105.0]
+ [-1825.0   -991.0    -1.0      0.0      0.0      0.0  1812225.0   984063.0   993.0]
+ [   0.0      0.0      0.0  -1825.0   -991.0    -1.0  1272025.0   690727.0   697.0]
+ [-2781.0   -877.0    -1.0      0.0      0.0      0.0  5030829.0  1586493.0  1809.0]
+ [   0.0      0.0      0.0  -2781.0   -877.0    -1.0  2511243.0   791931.0   903.0]]
+        </pre>
+            </p>
+
+            <h3>Gather Scene Homography</h3>
+            <p>
+                Recovered homography matrix $H_\text{Gather}$:
+                \[
+                H_\text{Gather} =
+                \begin{bmatrix}
+                2.167329 & 1.455925 & -2472.011 \\
+                -0.05535 & 3.059565 & -3389.454 \\
+                -0.00005551 & 0.0007142 & 1
+                \end{bmatrix}
+                \]
+            </p>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="input/gather1.jpg" alt="Forest 1">
+                    <div class="image-caption">Gather Scene 1</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/gather_homography_result.jpg"
+                        alt="Forest 2">
+                    <div class="image-caption">Gather Warped by H</div>
+                </div>
+            </div>
+            <p>
+                System of equations $A_\text{Gather} h = 0$:
+            <pre>
+[[-1757.0  -2327.0    -1.0      0.0      0.0      0.0  3241665.0  4293315.0  1845.0]
+ [   0.0      0.0      0.0  -1757.0  -2327.0    -1.0  2489669.0  3297359.0  1417.0]
+ [-2305.0  -2407.0    -1.0      0.0      0.0      0.0  5359125.0  5596275.0  2325.0]
+ [   0.0      0.0      0.0  -2305.0  -2407.0    -1.0  3422925.0  3574395.0  1485.0]
+ [-1525.0  -1601.0    -1.0      0.0      0.0      0.0  2340875.0  2457535.0  1535.0]
+ [   0.0      0.0      0.0  -1525.0  -1601.0    -1.0  1056825.0  1109493.0   693.0]
+ [-2367.0  -1651.0    -1.0      0.0      0.0      0.0  5848857.0  4079621.0  2471.0]
+ [   0.0      0.0      0.0  -2367.0  -1651.0    -1.0  1772883.0  1236599.0   749.0]
+ [-1453.0  -1933.0    -1.0      0.0      0.0      0.0  2201295.0  2928495.0  1515.0]
+ [   0.0      0.0      0.0  -1453.0  -1933.0    -1.0  1538727.0  2047047.0  1059.0]
+ [-2423.0  -1969.0    -1.0      0.0      0.0      0.0  6026001.0  4896903.0  2487.0]
+ [   0.0      0.0      0.0  -2423.0  -1969.0    -1.0  2667723.0  2167869.0  1101.0]
+ [ -549.0  -2063.0    -1.0      0.0      0.0      0.0   387045.0  1454415.0   705.0]
+ [   0.0      0.0      0.0   -549.0  -2063.0    -1.0   650565.0  2444655.0  1185.0]
+ [-1517.0  -1377.0    -1.0      0.0      0.0      0.0  2255779.0  2047599.0  1487.0]
+ [   0.0      0.0      0.0  -1517.0  -1377.0    -1.0   593147.0   538407.0   391.0]
+ [-2401.0  -1441.0    -1.0      0.0      0.0      0.0  6115347.0  3670227.0  2547.0]
+ [   0.0      0.0      0.0  -2401.0  -1441.0    -1.0  1121267.0   672947.0   467.0]
+ [-1549.0  -1263.0    -1.0      0.0      0.0      0.0  2325049.0  1895763.0  1501.0]
+ [   0.0      0.0      0.0  -1549.0  -1263.0    -1.0   329937.0   269019.0   213.0]
+ [-2375.0  -1331.0    -1.0      0.0      0.0      0.0  6025375.0  3376747.0  2537.0]
+ [   0.0      0.0      0.0  -2375.0  -1331.0    -1.0   719625.0   403293.0   303.0]]
+
+        </pre>
+            </p>
+        </div>
+
+
+        <div class="section">
+            <h2>Part A.3: Image Warping</h2>
+            <p>
+                Once homographies are computed, we warp images to align with
+                a
+                reference frame. Inverse warping is used to avoid holes: for
+                each
+                output pixel, we compute its corresponding source
+                coordinate.
+                Interpolation is then applied to get pixel values. Here we
+                compare
+                nearest-neighbor and bilinear interpolation methods.
+
+                We can rectify images by taking things that we know to be
+                rectangles in the source images, and mapping them to
+                rectangle-forming coordinates using a homography.
+            </p>
+
+            <div class="technical-details">
+                <h4>Interpolation Methods</h4>
+                <p>
+                    Nearest-neighbor rounds coordinates to the nearest
+                    pixel. It
+                    is
+                    fast but can produce blocky artifacts. Bilinear
+                    interpolation
+                    computes a weighted average of the 4 surrounding pixels,
+                    producing
+                    smoother output at a slight computational cost.
+                </p>
+                <p>
+                    In our experiments, bilinear interpolation produces
+                    slightly
+                    smoother
+                    images, although for large images such as these, the
+                    difference is
+                    not very noticeable.
+                </p>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <!-- Row 1: Bed -->
+                <div class="image-container">
+                    <img src="input/bed.jpg" alt="Bed Original">
+                    <div class="image-caption">Original – Bed</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/bed_rect_nn.jpg"
+                        alt="Bed Nearest Neighbor">
+                    <div class="image-caption">Nearest Neighbor – Rectified
+                        Bed
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="output/bed_rect_bilinear.jpg" alt="Bed Bilinear">
+                    <div class="image-caption">Bilinear – Rectified Bed
+                    </div>
+                </div>
+
+                <!-- Row 2: TV -->
+                <div class="image-container">
+                    <img src="input/tv.jpg" alt="TV Original">
+                    <div class="image-caption">Original – TV</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/tv_rect_nn.jpg" alt="TV Nearest Neighbor">
+                    <div class="image-caption">Nearest Neighbor – Rectified
+                        TV
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="output/tv_rect_bilinear.jpg" alt="TV Bilinear">
+                    <div class="image-caption">Bilinear – Rectified TV</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Part A.4: Mosaicing</h2>
+            <p>
+                Once the homography H has been computed between the two images,
+                the goal is to map one image (im1) onto the coordinate frame of
+                the other (im2) and blend them into a single seamless mosaic.
+                The first step is to warp im1 using the provided warp_fn (either
+                nearest-neighbor or bilinear interpolation) so that its pixels
+                are mapped according to the homography H. To ensure the final
+                mosaic canvas can hold both images, you compute the bounding
+                coordinates by transforming the corners of im1 with H and
+                combining them with the corners of im2, which allows you to
+                determine the output canvas size and offsets.
+                Next, a blank mosaic canvas is created, and im2 is placed at its
+                proper offset. A mask is also created for im2 to track which
+                pixels are occupied. Similarly, the warped im1 is cropped and
+                aligned to fit within the canvas, and a corresponding mask
+                identifies valid pixels in the warped image. To blend the two
+                images smoothly, the code constructs linear alpha maps for each
+                image based on the distance of each pixel from the center of its
+                nonzero region; pixels near the center have higher alpha values,
+                while those near the edges fade to zero. These alpha maps are
+                then combined and normalized so that overlapping regions are
+                weighted proportionally, avoiding abrupt seams.
+                Finally, the weighted sum of the two images is computed using
+                the alpha maps, producing a smoothly blended mosaic. Any pixel
+                outside both images remains black, while overlapping regions are
+                a linear blend of im1 and im2, resulting in a visually coherent
+                panorama. The final mosaic is clipped to valid pixel values,
+                converted back to the standard RGB ordering, and saved.
+            </p>
+            <div class="technical-details">
+                <h4>Alpha Blending Strategy</h4>
+                <ul>
+                    <li>Weights are 1 at the center of each image,
+                        decreasing
+                        linearly to 0 at edges.</li>
+                    <li>Only overlapping pixels are blended; non-overlapping
+                        pixels retain original intensity.</li>
+                </ul>
+            </div>
+            <div class="image-grid">
+                <div class="image-container span-all">
+                    <img src="output/forest_mosaic.jpg" alt="Forest Mosaic"
+                        class="large-image">
+                    <div class="image-caption">Final Forest Mosaic</div>
+                </div>
+                <div class="image-container span-all">
+                    <img src="output/vlsb_mosaic.jpg" alt="VLSB Mosaic"
+                        class="large-image">
+                    <div class="image-caption">Final VLSB Mosaic</div>
+                </div>
+                <div class="image-container span-all">
+                    <img src="output/gather_mosaic.jpg" alt="Gather Mosaic"
+                        class="large-image">
+                    <div class="image-caption">Final Gather Mosaic</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Conclusion</h2>
+            <p>
+                This project demonstrates the full pipeline of image
+                mosaicing:
+                capturing images with overlapping fields of view, estimating
+                homographies, warping images, and blending them seamlessly.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
