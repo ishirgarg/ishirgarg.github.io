@@ -478,6 +478,253 @@
         </div>
 
         <div class="section">
+            <h2>Part 2: Automatic Feature Detection</h2>
+
+            <p>
+                In the first part of this assignment, we manually chose which
+                points to align in the homography. Now we will perform all of
+                this automatically!
+            </p>
+        </div>
+        <div class="section">
+            <h2>Part B.1: Harris Corner Detection</h2>
+            <p>
+                We begin feature matching by detecting interest points using the
+                <strong>Harris Corner Detector</strong>. The detector identifies
+                points with strong local intensity variation in both directions.
+                These are potential feature points that are stable under
+                geometric and photometric transformations.
+            </p>
+
+            <div class="technical-details">
+                <h4>Harris Corner Formula</h4>
+                <p>
+                    The Harris matrix is defined as:
+                    \[
+                    M =
+                    \begin{bmatrix}
+                    I_x^2 & I_x I_y \\
+                    I_x I_y & I_y^2
+                    \end{bmatrix}
+                    \]
+                    and the response function is:
+                    \[
+                    R = \det(M) - k \cdot (\mathrm{trace}(M))^2
+                    \]
+                    where \(k\) is typically between 0.04 and 0.06.
+                </p>
+                <p>
+                    Points with \(R > \tau\) are selected as corners.
+                    Non-maximum
+                    suppression is then applied to retain only the most salient
+                    points.
+                </p>
+            </div>
+
+            <h3>Adaptive Non-Maximal Suppression (ANMS)</h3>
+            <p>
+                To ensure an even spatial distribution of features, we apply
+                <strong>Adaptive Non-Maximal Suppression</strong> (ANMS). The
+                algorithm selects a subset of strong corners that are spatially
+                well-separated. For each corner, a suppression radius is
+                computed
+                based on the distance to a stronger corner. The top N points
+                with
+                the largest radii are retained.
+            </p>
+
+            <div class="technical-details">
+                <h4>ANMS Radius Definition</h4>
+                <p>
+                    The suppression radius for corner \(i\) is:
+                    \[
+                    r_i = \min_j \|x_i - x_j\| \quad \text{s.t. } R_j > c R_i
+                    \]
+                    where \(c\) is typically 0.9.
+                </p>
+            </div>
+
+            <h3>Detected Harris Corners (Before and After ANMS)</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container span-all">
+                    <img src="output/harris_example.jpg"
+                        alt="Harris Corners Gather">
+                    <div class="image-caption">Harris Corners – Gather Scene
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Part B.2: Feature Descriptor Extraction</h2>
+            <p>
+                Once interest points have been detected, we compute
+                <strong>Feature Descriptors</strong> for each point. These
+                descriptors capture local image appearance around each corner,
+                enabling robust correspondence between different images.
+            </p>
+
+            <div class="technical-details">
+                <h4>Descriptor Computation</h4>
+                <p>
+                    Around each interest point, we extract a 40×40 pixel window,
+                    which is then blurred and downsampled to 8×8. The descriptor
+                    is normalized to have zero mean and unit variance:
+                    \[
+                    \hat{f} = \frac{f - \mu_f}{\sigma_f}
+                    \]
+                    where \(f\) is the flattened patch vector.
+                </p>
+                <p>
+                    For simplicity, rotation invariance is not enforced; patches
+                    are aligned with the image axes.
+                </p>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(1, 1fr);">
+                <div class="image-container span-all">
+                    <img src="output/displayed_features.jpg"
+                        alt="Features for Gather (6 displayed)">
+                    <div class="image-caption">Extracted Feature Descriptors –
+                        Gather Scene</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Part B.3: Feature Matching</h2>
+            <p>
+                With descriptors computed for each image, we now perform
+                <strong>Feature Matching</strong> to find correspondences
+                between
+                images. The goal is to identify pairs of points that represent
+                the
+                same physical location in different views.
+            </p>
+
+            <div class="technical-details">
+                <h4>Nearest Neighbor Matching</h4>
+                <p>
+                    For each descriptor \( f_i \) in image 1, we find its two
+                    nearest neighbors \( f_j^{(1)} \) and \( f_j^{(2)} \) in
+                    image 2
+                    using Euclidean distance. To ensure reliable matches, we
+                    apply
+                    the <strong>Lowe test</strong>:
+                    \[
+                    \frac{\|f_i - f_j^{(1)}\|}{\|f_i - f_j^{(2)}\|} < \tau \]
+                        where \( \tau \approx 0.7 \). </p>
+                        <p>
+                            This discards ambiguous matches and keeps only
+                            distinctive
+                            correspondences.
+                        </p>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(1, 1fr);">
+                <div class="image-container">
+                    <img src="output/forest_feature_match.jpg"
+                        alt="Raw Feature Matches">
+                    <div class="image-caption">Raw Descriptor Matches – Forest
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="output/vlsb_feature_match.jpg"
+                        alt="Raw Matches 2">
+                    <div class="image-caption">Raw Descriptor Matches – VLSB
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="output/gather_feature_match.jpg"
+                        alt="Raw Matches 3">
+                    <div class="image-caption">Raw Descriptor Matches – Gather
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Part B.4: RANSAC </h2>
+
+            <p>
+                While descriptor matching yields many correspondences, some are
+                incorrect due to noise or local ambiguities. To robustly
+                estimate
+                the geometric transformation (homography) between images, we
+                apply
+                the <strong>RANSAC (RANdom SAmple Consensus)</strong> algorithm.
+            </p>
+
+            <div class="technical-details">
+                <p>
+                    RANSAC repeatedly samples minimal sets of matches, fits a
+                    homography, and counts the number of inliers that satisfy:
+                    \[
+                    \|x'_i - H x_i\| < \epsilon \] The model with the largest
+                        consensus set is retained. </p>
+            </div>
+            <p>
+                Once robust homographies are computed, we can align all images
+                into a single reference frame and blend them to form a mosaic.
+            </p>
+
+            We compare the manual mosiacs from Part 1 to the automatically
+            generated mosaics.
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="output/vlsb_mosaic.jpg"
+                        alt="Warped VLSB to Forest">
+                    <div class="image-caption">VLSB Manual</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/vlsb_auto_mosaic.jpg"
+                        alt="Warped Gather to VLSB">
+                    <div class="image-caption">VLSB Automatic</div>
+                </div>
+            </div>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="output/forest_mosaic.jpg"
+                        alt="Warped VLSB to Forest">
+                    <div class="image-caption">Forest Manual</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/forest_auto_mosaic.jpg"
+                        alt="Warped Gather to VLSB">
+                    <div class="image-caption">Forest Automatic</div>
+                </div>
+            </div>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="output/gather_mosaic.jpg"
+                        alt="Warped VLSB to Forest">
+                    <div class="image-caption">Gather Manual</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/gather_auto_mosaic.jpg"
+                        alt="Warped Gather to VLSB">
+                    <div class="image-caption">Gather Automatic</div>
+                </div>
+            </div>
+        </div>
+
+        <p>
+            In general, there doesn't seem to be any noticeable quality decrease
+            from the automatic feature detection showing that our algorithms are
+            fairly robust. One drawback of the automatic feature detection is
+            that it requires some amount of hyperparameter tuning in order to
+            generate good results. For all of my images, the same or very
+            similar parameters yielded good results though, so it's possible
+            that these parameters are robust to variations in images.
+        </p>
+
+        <div class="section">
             <h2>Conclusion</h2>
             <p>
                 This project demonstrates the full pipeline of image
