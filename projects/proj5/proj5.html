@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project 5A: The Power of Diffusion Models!</title>
+    <title>Project 5: Diffusion Models & Flow Matching</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -144,12 +144,18 @@
 
 <body>
     <div class="container">
-        <h1>Project 5A: The Power of Diffusion Models!</h1>
+        <h1>Project 5: Diffusion Models & Flow Matching</h1>
         <p style="text-align: center; font-size: 18px; color: #7f8c8d;">By Ishir
             Garg</p>
 
+        <!-- ==================== PART A ==================== -->
+        <h1
+            style="margin-top: 40px; border-top: 4px solid #3498db; padding-top: 40px;">
+            Part A: The Power of Diffusion Models!
+        </h1>
+
         <div class="section">
-            <h2>Overview</h2>
+            <h2>Part A Overview</h2>
             <p>
                 In this project, we explore the power of diffusion models for
                 image generation and manipulation.
@@ -1226,13 +1232,12 @@
             </p>
         </div>
 
-        <!-- Conclusion -->
+        <!-- Part A Conclusion -->
         <div class="section">
-            <h2>Conclusion</h2>
+            <h2>Part A Conclusion</h2>
             <p>
-                This project successfully demonstrates the versatility and power
-                of diffusion models beyond
-                simple image generation:
+                Part A successfully demonstrates the versatility and power
+                of diffusion models beyond simple image generation:
             </p>
             <ul>
                 <li><strong>Forward Process:</strong> Implemented the
@@ -1259,14 +1264,905 @@
                 <li><strong>Hybrid Images:</strong> Combined frequency content
                     from multiple prompts</li>
             </ul>
+        </div>
+
+        <!-- ==================== PART B ==================== -->
+        <h1
+            style="margin-top: 80px; border-top: 4px solid #3498db; padding-top: 40px;">
+            Project 5B: Flow Matching from Scratch!
+        </h1>
+
+        <div class="section">
+            <h2>Part B Overview</h2>
             <p>
-                The project reveals that diffusion models are not just
-                generation tools, but flexible
-                frameworks for image manipulation, restoration, and creating
-                visual illusions. The ability
-                to compose noise estimates in creative ways opens up numerous
-                possibilities for controllable
-                image synthesis.
+                In Part B, we build and train our own flow matching models from
+                scratch on the MNIST dataset.
+                Unlike Part A where we used pre-trained diffusion models, here
+                we implement the complete
+                training pipeline including the UNet architecture, the flow
+                matching objective, and both
+                unconditional and class-conditional generation. Flow matching is
+                a continuous-time generative
+                framework that learns to transport samples from a simple prior
+                distribution (Gaussian noise)
+                to the target data distribution through an ordinary differential
+                equation (ODE).
+            </p>
+            <p>
+                The key insight of flow matching is that we define a
+                time-dependent velocity field $v_\theta(x, t)$
+                that transforms noise $x_0 \sim \mathcal{N}(0, I)$ at time $t=0$
+                to data $x_1$ at time $t=1$.
+                The model learns to predict this velocity field, enabling
+                generation by integrating the ODE
+                from $t=0$ to $t=1$.
+            </p>
+        </div>
+
+        <!-- Part B 1: Training a Single-step Denoising UNet -->
+        <div class="section">
+            <h2>Part 1: Training a Single-step Denoising UNet</h2>
+            <p>
+                Before diving into flow matching, we first train a simple
+                denoising UNet that learns to
+                remove Gaussian noise from images in a single step. This serves
+                as a warm-up exercise
+                to familiarize ourselves with the UNet architecture and training
+                pipeline.
+            </p>
+        </div>
+
+        <!-- Part B 1.1: Implementing the UNet -->
+        <div class="section">
+            <h2>Part 1.1: Implementing the UNet</h2>
+            <p>
+                The UNet architecture consists of an encoder-decoder structure
+                with skip connections.
+                We implement several building blocks that are composed to form
+                the full network.
+            </p>
+
+            <div class="technical-details">
+                <h4>Simple Operations</h4>
+                <p>Each basic operation follows the pattern: <strong>Convolution
+                        → BatchNorm → GELU activation</strong></p>
+                <ul>
+                    <li><strong>Conv:</strong> 3×3 convolution with padding=1
+                        (preserves spatial size)</li>
+                    <li><strong>DownConv:</strong> 3×3 convolution with stride=2
+                        (halves spatial size)</li>
+                    <li><strong>UpConv:</strong> 4×4 transposed convolution with
+                        stride=2 (doubles spatial size)</li>
+                    <li><strong>Flatten:</strong> 7×7 average pooling followed
+                        by GELU</li>
+                    <li><strong>Unflatten:</strong> 7×7 transposed convolution
+                        followed by BatchNorm and GELU</li>
+                </ul>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part1.1/unet_operations.png"
+                        alt="UNet Operations">
+                    <div class="image-caption">Basic UNet Operations</div>
+                </div>
+            </div>
+
+            <div class="technical-details">
+                <h4>Composed Operations</h4>
+                <ul>
+                    <li><strong>ConvBlock:</strong> Two sequential Conv
+                        operations</li>
+                    <li><strong>DownBlock:</strong> DownConv followed by
+                        ConvBlock</li>
+                    <li><strong>UpBlock:</strong> UpConv followed by ConvBlock
+                    </li>
+                </ul>
+            </div>
+
+            <h3>Unconditional UNet Architecture</h3>
+            <p>
+                The unconditional UNet takes a noisy 28×28 image and outputs a
+                denoised image of the same size.
+                The architecture consists of an encoder path that progressively
+                downsamples the input,
+                a bottleneck that compresses to a 1×1 spatial representation,
+                and a decoder path that
+                upsamples back to the original resolution. Skip connections
+                concatenate encoder features
+                to decoder features at matching resolutions.
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part1.1/unconditional_unet.png"
+                        alt="Unconditional UNet Architecture">
+                    <div class="image-caption">Unconditional UNet Architecture
+                    </div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Architecture Details</h4>
+                <p>Let $H$ = num_hiddens (we use $H = 128$):</p>
+                <ul>
+                    <li><strong>Encoder:</strong>
+                        <ul>
+                            <li>ConvBlock: 1 → H channels (28×28)</li>
+                            <li>DownBlock: H → H channels (14×14)</li>
+                            <li>DownBlock: H → 2H channels (7×7)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Bottleneck:</strong>
+                        <ul>
+                            <li>Flatten: 2H channels (1×1)</li>
+                            <li>Unflatten: 2H channels (7×7)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Decoder:</strong>
+                        <ul>
+                            <li>Concat + UpBlock: 4H → H channels (14×14)</li>
+                            <li>Concat + UpBlock: 2H → H channels (28×28)</li>
+                            <li>Concat + ConvBlock: 2H → H channels (28×28)</li>
+                            <li>Conv2d: H → 1 channel (28×28)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Part B 1.2: Using the UNet to Train a Denoiser -->
+        <div class="section">
+            <h2>Part 1.2: Using the UNet to Train a Denoiser</h2>
+            <p>
+                We train the UNet to denoise images corrupted with Gaussian
+                noise at a fixed noise level.
+                The training objective is simply the L2 loss between the
+                predicted denoised image and the
+                original clean image.
+            </p>
+
+            <h3>Visualizing Noisy Images</h3>
+            <p>
+                First, let's visualize MNIST images with different levels of
+                Gaussian noise added:
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part1.2/noisy_images.jpg"
+                        alt="Noisy MNIST Images">
+                    <div class="image-caption">MNIST digit with varying noise
+                        levels σ ∈ {0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0}</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Noise Model</h4>
+                <p>Given a clean image $x$ and noise level $\sigma$:</p>
+                <p>$$x_{\text{noisy}} = x + \sigma \cdot \epsilon, \quad
+                    \epsilon \sim \mathcal{N}(0, I)$$</p>
+            </div>
+        </div>
+
+        <!-- Part B 1.2.1: Training -->
+        <div class="section">
+            <h2>Part 1.2.1: Training the Denoiser</h2>
+
+            <div class="technical-details">
+                <h4>Training Hyperparameters</h4>
+                <ul>
+                    <li><strong>Batch Size:</strong> 256</li>
+                    <li><strong>Learning Rate:</strong> 1e-4</li>
+                    <li><strong>Noise Level (σ):</strong> 0.5</li>
+                    <li><strong>Hidden Dimensions:</strong> 128</li>
+                    <li><strong>Number of Epochs:</strong> 5</li>
+                    <li><strong>Optimizer:</strong> Adam</li>
+                    <li><strong>Loss Function:</strong> MSE (L2 Loss)</li>
+                </ul>
+            </div>
+
+            <div class="equation-box">
+                <h4>Training Objective</h4>
+                <p>$$\mathcal{L} = \mathbb{E}_{x, \epsilon}\left[\|f_\theta(x +
+                    \sigma\epsilon) - x\|^2\right]$$</p>
+                <p>where $f_\theta$ is our UNet and $\sigma = 0.5$ is the fixed
+                    noise level.</p>
+            </div>
+
+            <h3>Training Curves</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part1.2.1/unet_training_curve.png"
+                        alt="Training Curve">
+                    <div class="image-caption">Training Loss per Iteration</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part1.2.1/unet_training_curve_per_epoch.png"
+                        alt="Training Curve Per Epoch">
+                    <div class="image-caption">Average Training Loss per Epoch
+                    </div>
+                </div>
+            </div>
+
+            <h3>Denoising Results on Test Set</h3>
+            <p>
+                Here we compare the denoising performance at epochs 1 and 5 on
+                test images
+                corrupted with σ = 0.5 noise:
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part1.2.1/test_set_images.jpg"
+                        alt="Test Set Denoising Results">
+                    <div class="image-caption">Left to Right: Original, Noisy
+                        (σ=0.5), Epoch 1 Output, Epoch 5 Output</div>
+                </div>
+            </div>
+
+            <p>
+                The model shows clear improvement between epochs 1 and 5. By
+                epoch 5, the denoised
+                images are crisp and closely match the original digits,
+                demonstrating successful
+                learning of the denoising task.
+            </p>
+        </div>
+
+        <!-- Part B 1.2.2: Out-of-Distribution Testing -->
+        <div class="section">
+            <h2>Part 1.2.2: Out-of-Distribution Testing</h2>
+            <p>
+                Our denoiser was trained on images with a fixed noise level of σ
+                = 0.5.
+                What happens when we test it on images with different noise
+                levels?
+                This tests the model's generalization to out-of-distribution
+                inputs.
+            </p>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_0.jpg"
+                        alt="OOD σ=0">
+                    <div class="image-caption">σ = 0 (No Noise)</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_0.2.jpg"
+                        alt="OOD σ=0.2">
+                    <div class="image-caption">σ = 0.2</div>
+                </div>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_0.4.jpg"
+                        alt="OOD σ=0.4">
+                    <div class="image-caption">σ = 0.4</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_0.6.jpg"
+                        alt="OOD σ=0.6">
+                    <div class="image-caption">σ = 0.6</div>
+                </div>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_0.8.jpg"
+                        alt="OOD σ=0.8">
+                    <div class="image-caption">σ = 0.8</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part1.2.2/test_results_ood_sigma_1.0.jpg"
+                        alt="OOD σ=1.0">
+                    <div class="image-caption">σ = 1.0</div>
+                </div>
+            </div>
+
+            <p>
+                The model performs best at its training noise level (σ = 0.5)
+                and nearby values.
+                For lower noise levels (σ = 0, 0.2), the model still produces
+                reasonable outputs but
+                may slightly blur already-clean images. For higher noise levels
+                (σ = 0.8, 1.0),
+                the model struggles to fully recover the digit, as these noise
+                levels are significantly
+                out of distribution from the training data. The noisier the
+                input image, the more noise is remaining after denoising.
+            </p>
+        </div>
+
+        <!-- Part B 1.2.3: Denoising Pure Noise -->
+        <div class="section">
+            <h2>Part 1.2.3: Denoising Pure Noise</h2>
+            <p>
+                What if we try to train a model to "denoise" pure Gaussian noise
+                into real images?
+                This experiment trains the UNet to map random noise directly to
+                MNIST digits,
+                essentially attempting one-shot generation without iterative
+                refinement.
+            </p>
+
+            <div class="equation-box">
+                <h4>Training Objective</h4>
+                <p>$$\mathcal{L} = \mathbb{E}_{x, z}\left[\|f_\theta(z) -
+                    x\|^2\right]$$</p>
+                <p>where $z \sim \mathcal{N}(0, I)$ is pure noise and $x$ is a
+                    random training image.</p>
+            </div>
+
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part1.2.3/training_curve_noise_input.jpg"
+                        alt="Training Curve">
+                    <div class="image-caption">Training Loss per Iteration</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part1.2.3/average_training_loss_per_epoch_noise_input.jpg"
+                        alt="Average Loss Per Epoch">
+                    <div class="image-caption">Average Training Loss per Epoch
+                    </div>
+                </div>
+            </div>
+
+            <h3>Generation Results</h3>
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part1.2.3/denoising_pure_noise.jpg"
+                        alt="Pure Noise Denoising">
+                    <div class="image-caption">Left: Pure Noise Input, Middle:
+                        Epoch 1 Output, Right: Epoch 5 Output</div>
+                </div>
+            </div>
+
+            <p>
+                As expected, this approach fails to generate meaningful images.
+                The model learns
+                to output the average of the training distribution (a blurry
+                gray blob) because
+                there's no correspondence between the random noise input and the
+                target image.
+                Different noise samples get mapped to unrelated images during
+                training, so the
+                model can only minimize the loss by outputting the mean. This is
+                the same idea as centroid clustering, where to minimize the MSE,
+                we simply want to average all of our datapoints, in this case
+                the digits. This
+                motivates the need
+                for a structured approach like flow matching, where we establish
+                a smooth path
+                between noise and data.
+            </p>
+        </div>
+
+        <!-- Part B 2: Flow Matching -->
+        <div class="section">
+            <h2>Part 2: Flow Matching</h2>
+            <p>
+                Flow matching overcomes the limitations of one-step denoising by
+                learning a
+                time-dependent velocity field that gradually transforms noise
+                into data.
+                Instead of directly mapping noise to images, we interpolate
+                between them
+                and learn the velocity at each point along the path.
+            </p>
+
+            <div class="equation-box">
+                <h4>Flow Matching Framework</h4>
+                <p>Define an interpolation path from noise $x_0 \sim
+                    \mathcal{N}(0, I)$ to data $x_1$:</p>
+                <p>$$x_t = t \cdot x_1 + (1-t) \cdot x_0$$</p>
+                <p>The target velocity at time $t$ is simply:</p>
+                <p>$$v^*(x_t, t) = x_1 - x_0$$</p>
+                <p>We train a neural network $v_\theta(x_t, t)$ to predict this
+                    velocity.</p>
+            </div>
+        </div>
+
+        <!-- Part B 2.1: Time-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.1: Implementing a Time-Conditioned UNet</h2>
+            <p>
+                To implement flow matching, we need a UNet that takes both the
+                image and
+                a time parameter $t \in [0, 1]$ as input. The time conditioning
+                is achieved
+                by injecting the time embedding into the network via learned
+                fully-connected
+                blocks (FCBlocks).
+            </p>
+
+            <div class="technical-details">
+                <h4>FCBlock Architecture</h4>
+                <p>The FCBlock processes the scalar time value through two
+                    linear layers:</p>
+                <p><strong>Linear → GELU → Linear</strong></p>
+                <p>This allows the network to learn a rich representation of
+                    time that can
+                    modulate the features at different stages of the UNet.</p>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.1/fcblock.png"
+                        alt="FCBlock Architecture">
+                    <div class="image-caption">FCBlock Architecture</div>
+                </div>
+            </div>
+
+            <h3>Time-Conditioned UNet Architecture</h3>
+            <p>
+                The time-conditioned UNet extends the unconditional UNet by
+                adding time conditioning.
+                Two FCBlocks project the scalar time $t$ to vectors that are
+                multiplied element-wise
+                with the features at the bottleneck and first upsampling stage.
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.1/timecond_unet.png"
+                        alt="Time-Conditioned UNet">
+                    <div class="image-caption">Time-Conditioned UNet
+                        Architecture with FCBlocks for time injection</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Time Conditioning Mechanism</h4>
+                <p>Given time $t$, we compute two embeddings:</p>
+                <ul>
+                    <li>$t_1 = \text{FCBlock}_1(t)$ with output dimension $2H$
+                    </li>
+                    <li>$t_2 = \text{FCBlock}_2(t)$ with output dimension $H$
+                    </li>
+                </ul>
+                <p>These are applied via element-wise multiplication:</p>
+                <ul>
+                    <li>At bottleneck: $x \leftarrow t_1 \odot x$</li>
+                    <li>After first up-block: $x \leftarrow t_2 \odot x$</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Part B 2.2: Training the Time-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.2: Training the Time-Conditioned UNet</h2>
+
+            <div class="technical-details">
+                <h4>Training Hyperparameters</h4>
+                <ul>
+                    <li><strong>Batch Size:</strong> 64</li>
+                    <li><strong>Learning Rate:</strong> 1e-2</li>
+                    <li><strong>Hidden Dimensions:</strong> 64</li>
+                    <li><strong>Number of Epochs:</strong> 10</li>
+                    <li><strong>Number of Timesteps (sampling):</strong> 50</li>
+                    <li><strong>Optimizer:</strong> Adam</li>
+                    <li><strong>Learning Rate Scheduler:</strong> ExponentialLR
+                        (γ = 0.1^(1/num_epochs))</li>
+                </ul>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.2/algo_training.png"
+                        alt="Training Algorithm">
+                    <div class="image-caption">Flow Matching Training Algorithm
+                        (Algorithm 1)</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Training Objective</h4>
+                <p>$$\mathcal{L} = \mathbb{E}_{x_1, x_0, t}\left[\|v_\theta(x_t,
+                    t) - (x_1 - x_0)\|^2\right]$$</p>
+                <p>where:</p>
+                <ul>
+                    <li>$x_1$ is a training image</li>
+                    <li>$x_0 \sim \mathcal{N}(0, I)$ is sampled noise</li>
+                    <li>$t \sim \text{Uniform}(0, 1)$ is a random timestep</li>
+                    <li>$x_t = t \cdot x_1 + (1-t) \cdot x_0$ is the
+                        interpolated sample</li>
+                </ul>
+            </div>
+
+            <h3>Training Curves</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part2.2/training_curve_tc.jpg"
+                        alt="TC Training Curve">
+                    <div class="image-caption">Training Loss per Iteration</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part2.2/average_training_loss_per_epoch_tc.jpg"
+                        alt="TC Average Loss">
+                    <div class="image-caption">Average Training Loss per Epoch
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Part B 2.3: Sampling from the Time-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.3: Sampling from the Time-Conditioned UNet</h2>
+            <p>
+                To generate new images, we start with pure Gaussian noise and
+                integrate the
+                learned velocity field from $t=0$ to $t=1$ using Euler
+                integration.
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.3/algo_sampling.png"
+                        alt="Sampling Algorithm">
+                    <div class="image-caption">Flow Matching Sampling Algorithm
+                        (Algorithm 2)</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Euler Integration for Sampling</h4>
+                <p>Starting from $x_0 \sim \mathcal{N}(0, I)$, iterate:</p>
+                <p>$$x_{t+\Delta t} = x_t + \Delta t \cdot v_\theta(x_t, t)$$
+                </p>
+                <p>where $\Delta t = 1/T$ and $T$ is the number of timesteps (we
+                    use $T = 50$).</p>
+            </div>
+
+            <h3>Generated Samples</h3>
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.3/samples_tc.jpg"
+                        alt="Time-Conditioned Samples">
+                    <div class="image-caption">Samples from epochs 1, 5, and 10
+                        (columns) with different seeds (rows)</div>
+                </div>
+            </div>
+
+            <p>
+                The quality improves significantly with training. Epoch 1
+                samples are noisy and
+                lack clear digit structure. By epoch 5, more explicit structure
+                emerges, and by epoch 10,
+                the samples are crisper. However, the samples generated are not
+                always real digits, but look more like random symbols. Also, we
+                cannot control which digit is generated
+                - the model samples unconditionally from the entire
+                distribution.
+            </p>
+        </div>
+
+        <!-- Part B 2.4: Class-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.4: Implementing a Class-Conditioned UNet</h2>
+            <p>
+                To enable conditional generation of specific digits, we extend
+                the UNet to also
+                condition on class labels. The class information is injected
+                similarly to time,
+                using additional FCBlocks.
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.4/class_cond_code.png"
+                        alt="Class-Conditioned Architecture">
+                    <div class="image-caption">Class-Conditioned UNet
+                        Architecture</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Class and Time Conditioning</h4>
+                <p>The class label $c \in \{0, ..., 9\}$ is converted to a
+                    one-hot vector $c_{\text{onehot}} \in \mathbb{R}^{10}$.</p>
+                <p>Similar to time, we compute class embeddings:</p>
+                <ul>
+                    <li>$c_1 = \text{FCBlock}_3(c_{\text{onehot}})$ with output
+                        dimension $2H$</li>
+                    <li>$c_2 = \text{FCBlock}_4(c_{\text{onehot}})$ with output
+                        dimension $H$</li>
+                </ul>
+                <p>The conditioning is now combined:</p>
+                <ul>
+                    <li>At bottleneck: $x \leftarrow c_1 \odot x + t_1$</li>
+                    <li>After first up-block: $x \leftarrow c_2 \odot x + t_2$
+                    </li>
+                </ul>
+            </div>
+
+            <div class="technical-details">
+                <h4>Classifier-Free Guidance (CFG) Support</h4>
+                <p>
+                    To enable classifier-free guidance during sampling, we train
+                    with random dropout
+                    of the class condition. A mask $m \sim \text{Bernoulli}(1 -
+                    p_{\text{uncond}})$ is
+                    sampled, and when $m = 0$, the class embeddings are zeroed
+                    out (unconditional generation).
+                </p>
+                <p><strong>Dropout probability (p_uncond):</strong> 0.1</p>
+            </div>
+        </div>
+
+        <!-- Part B 2.5: Training the Class-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.5: Training the Class-Conditioned UNet</h2>
+
+            <div class="technical-details">
+                <h4>Training Hyperparameters</h4>
+                <ul>
+                    <li><strong>Batch Size:</strong> 64</li>
+                    <li><strong>Learning Rate:</strong> 5e-3</li>
+                    <li><strong>Hidden Dimensions:</strong> 64</li>
+                    <li><strong>Number of Epochs:</strong> 10</li>
+                    <li><strong>Number of Timesteps (sampling):</strong> 300
+                    </li>
+                    <li><strong>Unconditional Dropout (p_uncond):</strong> 0.1
+                    </li>
+                    <li><strong>Optimizer:</strong> Adam with ExponentialLR
+                        scheduler</li>
+                </ul>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.5/training_algo.png"
+                        alt="Class-Conditioned Training Algorithm">
+                    <div class="image-caption">Class-Conditioned Flow Matching
+                        Training Algorithm (Algorithm 3)</div>
+                </div>
+            </div>
+
+            <h3>Training Curves</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part2.5/training_curve_cc.jpg"
+                        alt="CC Training Curve">
+                    <div class="image-caption">Training Loss per Iteration</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part2.5/average_training_loss_per_epoch_cc.jpg"
+                        alt="CC Average Loss">
+                    <div class="image-caption">Average Training Loss per Epoch
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Part B 2.6: Sampling from the Class-Conditioned UNet -->
+        <div class="section">
+            <h2>Part 2.6: Sampling from the Class-Conditioned UNet</h2>
+            <p>
+                At inference time, we use Classifier-Free Guidance (CFG) to
+                improve sample quality.
+                CFG interpolates between unconditional and conditional
+                predictions, pushing samples
+                closer to the conditional distribution.
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.6/sampling_algo.png"
+                        alt="Sampling with CFG Algorithm">
+                    <div class="image-caption">Class-Conditioned Sampling with
+                        CFG (Algorithm 4)</div>
+                </div>
+            </div>
+
+            <div class="equation-box">
+                <h4>Classifier-Free Guidance</h4>
+                <p>At each sampling step, we compute both conditional and
+                    unconditional velocities:</p>
+                <p>$$v_{\text{uncond}} = v_\theta(x_t, t, c, m=0)$$</p>
+                <p>$$v_{\text{cond}} = v_\theta(x_t, t, c, m=1)$$</p>
+                <p>The guided velocity is:</p>
+                <p>$$v_{\text{guided}} = v_{\text{uncond}} + \gamma
+                    (v_{\text{cond}} - v_{\text{uncond}})$$</p>
+                <p>where $\gamma$ is the guidance scale. We use $\gamma = 5.0$.
+                </p>
+            </div>
+
+            <h3>Class-Conditional Generated Samples</h3>
+            <p>
+                We generate 4 samples for each digit (0-9) at different training
+                epochs:
+            </p>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.6/class_conditional_samples_epoch_1.jpg"
+                        alt="Epoch 1 Samples">
+                    <div class="image-caption">Class-Conditional Samples at
+                        Epoch 1</div>
+                </div>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.6/class_conditional_samples_epoch_5.jpg"
+                        alt="Epoch 5 Samples">
+                    <div class="image-caption">Class-Conditional Samples at
+                        Epoch 5</div>
+                </div>
+            </div>
+
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.6/class_conditional_samples_epoch_10.jpg"
+                        alt="Epoch 10 Samples">
+                    <div class="image-caption">Class-Conditional Samples at
+                        Epoch 10</div>
+                </div>
+            </div>
+
+            <p>
+                The class conditioning works effectively! At epoch 1, the
+                samples are noisy but
+                show some class-specific structure. By epoch 5, the digits are
+                clearly recognizable
+                and match their target class. At epoch 10, the samples are high
+                quality with good
+                diversity within each class. Interestingly, the model already
+                does quite well at epoch 5, and there is not that much gain from
+                training for 10 epochs.
+            </p>
+        </div>
+
+        <!-- Part B 2.7: Bells & Whistles - Optimizer Comparison -->
+        <div class="section">
+            <h2>Part 2.7: Getting Rid of the Scheduler
+            </h2>
+            <p>
+                As an additional experiment, we compare different optimizer
+                configurations
+                for training the class-conditioned model:
+            </p>
+
+            <ul>
+                <li><strong>ExponentialLR:</strong> Adam optimizer with
+                    exponential learning rate decay (γ = 0.1^(1/10))</li>
+                <li><strong>AdamW:</strong> AdamW optimizer (Adam with weight
+                    decay of 0.01) without learning rate scheduling; this tries
+                    to compensate for the lack of a scheduler by using weight
+                    decay for regularization</li>
+                <li><strong>No Scheduler (lr = 5e-3):</strong> Plain Adam
+                    optimizer without
+                    any learning rate scheduling as a baseline</li>
+            </ul>
+
+            <h3>Training Loss Comparison</h3>
+            <div class="image-grid" style="grid-template-columns: 1fr;">
+                <div class="image-container">
+                    <img src="partB/part2.7 (removing scheduler)/loss_comparison.jpg"
+                        alt="Loss Comparison">
+                    <div class="image-caption">Training Loss Comparison Across
+                        Different Optimizer Configurations</div>
+                </div>
+            </div>
+
+            <h3>Individual Training Curves</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part2.7 (removing scheduler)/training_curve_cc_adamw.jpg"
+                        alt="AdamW Training">
+                    <div class="image-caption">AdamW Training Loss</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part2.7 (removing scheduler)/training_curve_cc_noscheduler.jpg"
+                        alt="No Scheduler Training">
+                    <div class="image-caption">No Scheduler Training Loss</div>
+                </div>
+            </div>
+
+            <h3>Sample Quality Comparison</h3>
+            <div class="image-grid"
+                style="grid-template-columns: repeat(2, 1fr);">
+                <div class="image-container">
+                    <img src="partB/part2.7 (removing scheduler)/class_conditional_samples_epoch_10_adamw.jpg"
+                        alt="AdamW Samples">
+                    <div class="image-caption">AdamW Samples at Epoch 10</div>
+                </div>
+                <div class="image-container">
+                    <img src="partB/part2.7 (removing scheduler)/class_conditional_samples_epoch_10_noscheduler.jpg"
+                        alt="No Scheduler Samples">
+                    <div class="image-caption">No Scheduler Samples at Epoch 10
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                The comparison reveals interesting trade-offs:
+            </p>
+            <ul>
+                <li><strong>ExponentialLR:</strong> Achieves the lowest final
+                    loss due to the decaying learning rate
+                    allowing fine-grained optimization in later epochs.</li>
+                <li><strong>AdamW:</strong> Maintains a higher but more stable
+                    loss. The weight decay helps with
+                    regularization and the samples are of good quality.</li>
+                <li><strong>No Scheduler:</strong> Shows higher variance in
+                    later epochs as the constant learning
+                    rate prevents fine convergence, but still produces
+                    reasonable samples.</li>
+            </ul>
+            <p>
+                All configurations produce recognizable digits, but the
+                ExponentialLR scheduler provides
+                the best balance of training stability and final sample quality
+                by a very small margin. Interestingly, removing the learning
+                rate scheduler does not seem to really redcue the quality of
+                generated images by any noticeable amount. Even the AdamW images
+                are reasonable except for one of the 9 digits which is not as
+                sharp.
+            </p>
+        </div>
+
+        <!-- Final Conclusion -->
+        <div class="section">
+            <h2>Conclusion</h2>
+            <p>
+                This project successfully demonstrated both the practical use of
+                pre-trained diffusion models
+                (Part A) and the implementation of flow matching from scratch
+                (Part B):
+            </p>
+
+            <h3>Part A Achievements:</h3>
+            <ul>
+                <li>Implemented forward and reverse diffusion processes</li>
+                <li>Demonstrated iterative denoising and classifier-free
+                    guidance</li>
+                <li>Created image editing applications including SDEdit,
+                    inpainting, and text-conditional generation</li>
+                <li>Built optical illusions using visual anagrams and hybrid
+                    images</li>
+            </ul>
+
+            <h3>Part B Achievements:</h3>
+            <ul>
+                <li><strong>UNet Architecture:</strong> Implemented a complete
+                    UNet with encoder-decoder structure and skip connections
+                </li>
+                <li><strong>Single-step Denoising:</strong> Trained a denoiser
+                    and explored its out-of-distribution behavior</li>
+                <li><strong>Flow Matching:</strong> Implemented the continuous
+                    normalizing flow framework for generation</li>
+                <li><strong>Time Conditioning:</strong> Extended the UNet with
+                    FCBlocks for time-aware generation</li>
+                <li><strong>Class Conditioning:</strong> Enabled controlled
+                    generation of specific digits</li>
+                <li><strong>Classifier-Free Guidance:</strong> Implemented CFG
+                    for improved sample quality</li>
+                <li><strong>Optimizer Analysis:</strong> Compared different
+                    training configurations</li>
+            </ul>
+
+            <p>
+                The project reveals the elegant mathematical framework
+                underlying modern generative models.
+                Flow matching provides a clean, intuitive approach to learning
+                generative models: define a
+                path from noise to data, learn the velocity along that path, and
+                integrate to generate.
+                Combined with classifier-free guidance, this simple framework
+                produces high-quality
+                conditional samples, demonstrating the power and flexibility of
+                flow-based generative models.
             </p>
         </div>
 
