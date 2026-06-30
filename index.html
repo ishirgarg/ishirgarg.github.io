@@ -1,139 +1,495 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CS 180 Projects</title>
-    <meta name="description" content="Simple project index with cards." />
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans"]
-                    },
-                    boxShadow: { soft: "0 10px 25px -15px rgba(0,0,0,0.25)" },
-                },
-                container: { center: true, padding: "1rem" }
-            },
-            darkMode: 'class'
-        };
-    </script>
+    <title>Ishir Garg</title>
+    <meta name="description"
+        content="Ishir Garg — AI researcher at UC Berkeley working on reinforcement learning and large language models." />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
+
     <style>
-        .card {
-            transition: transform .2s ease, box-shadow .2s ease;
+        :root {
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --muted: #6b7280;
+            --line: #e7e7e7;
+            --accent: #2563a8;
+            --accent-soft: #eef3f9;
+            --maxw: 720px;
         }
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 16px 45px -15px rgba(0, 0, 0, .3);
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        .wrap {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 64px 24px 96px;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* ---------- Header ---------- */
+        .intro {
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+        }
+
+        .intro-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        h1 {
+            font-family: "Newsreader", Georgia, "Times New Roman", serif;
+            font-weight: 500;
+            font-size: 2rem;
+            letter-spacing: -0.01em;
+            margin: 0 0 6px;
+        }
+
+        .tagline {
+            color: var(--muted);
+            font-size: 0.98rem;
+            margin: 0 0 16px;
+        }
+
+        .photo {
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--accent-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Newsreader", Georgia, serif;
+            font-size: 2.6rem;
+            color: var(--accent);
+            border: 1px solid var(--line);
+        }
+
+        .bio p {
+            margin: 0 0 12px;
+        }
+
+        .links {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            font-size: 0.93rem;
+        }
+
+        .links a {
+            color: var(--fg);
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 1px;
+        }
+
+        .links a:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* ---------- Sections ---------- */
+        section {
+            margin-top: 52px;
+        }
+
+        h2 {
+            font-family: "Newsreader", Georgia, serif;
+            font-weight: 500;
+            font-size: 1.35rem;
+            margin: 0 0 22px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        /* ---------- News ---------- */
+        .news {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .news li {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .news .date {
+            color: var(--muted);
+            flex-shrink: 0;
+            width: 84px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ---------- Publications ---------- */
+        .pub {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .pub-thumb {
+            flex-shrink: 0;
+            width: 116px;
+            height: 78px;
+            border-radius: 8px;
+            background: var(--accent-soft);
+            border: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-family: "Newsreader", Georgia, serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .pub-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pub-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0 0 3px;
+            line-height: 1.4;
+        }
+
+        .pub-authors {
+            font-size: 0.92rem;
+            color: var(--fg);
+            margin: 0 0 3px;
+        }
+
+        .pub-authors .me {
+            font-weight: 600;
+        }
+
+        .pub-venue {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin: 0 0 6px;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.74rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: #b45309;
+            background: #fef6e7;
+            border: 1px solid #f3dca6;
+            border-radius: 999px;
+            padding: 1px 9px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .pub-links {
+            font-size: 0.88rem;
+        }
+
+        .pub-links a {
+            margin-right: 14px;
+        }
+
+        /* ---------- CV lists (Research / Industry) ---------- */
+        .cv {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cv li {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            padding: 7px 0;
+            font-size: 0.96rem;
+            border-bottom: 1px solid #f3f3f3;
+        }
+
+        .cv li:last-child {
+            border-bottom: none;
+        }
+
+        .cv-date {
+            color: var(--muted);
+            flex-shrink: 0;
+            width: 56px;
+            font-size: 0.88rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cv-role {
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .cv-org {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        /* ---------- Awards ---------- */
+        .awards {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .awards li {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .awards li::before {
+            content: "—";
+            position: absolute;
+            left: 0;
+            color: var(--muted);
+        }
+
+        footer {
+            margin-top: 64px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 600px) {
+            .wrap {
+                padding: 40px 20px 72px;
+            }
+
+            .intro {
+                flex-direction: column-reverse;
+                align-items: flex-start;
+                gap: 18px;
+            }
+
+            .photo {
+                width: 104px;
+                height: 104px;
+                font-size: 2rem;
+            }
+
+            .pub {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .pub-thumb {
+                width: 100%;
+                height: 64px;
+            }
+
+            .news li {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .news .date {
+                width: auto;
+            }
+
+            .cv-org {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
 
-<body
-    class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 min-h-screen">
-    <!-- Header -->
-    <header
-        class="sticky top-0 z-40 border-b border-gray-200/70 dark:border-white/10 bg-white/80 dark:bg-gray-950/70 backdrop-blur">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight">My
-                Projects</h1>
-            <div class="ml-auto text-sm text-gray-500 dark:text-gray-400">By
-                Ishir Garg</div>
-        </div>
-    </header>
+<body>
+    <div class="wrap">
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        <section>
-            <div id="grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- ===== Intro ===== -->
+        <header class="intro">
+            <div class="intro-text">
+                <h1>Ishir Garg</h1>
+                <p class="tagline">AI Researcher · UC Berkeley</p>
+                <div class="bio">
+                    <p>
+                        I'm an undergraduate at UC Berkeley studying Electrical Engineering &amp; Computer Science
+                        and Engineering Mathematics &amp; Statistics. I do research at
+                        <a href="https://bair.berkeley.edu/">Berkeley AI Research (BAIR)</a>, advised by
+                        <a href="https://people.eecs.berkeley.edu/~svlevine/">Sergey Levine</a> and
+                        <a href="https://people.eecs.berkeley.edu/~keutzer/">Kurt Keutzer</a>. Previously, I also
+                        worked with <a href="https://people.eecs.berkeley.edu/~dawnsong/">Dawn Song</a>.
+                    </p>
+                    <p>
+                        My research centers on <strong>reinforcement learning</strong> and the
+                        <strong>scalable, efficient deployment of agentic and robotic systems</strong>.
+                        Some of my previous work has centered around building principled frameworks and
+                        information-theoretic tools for generating synthetic training data and evaluating LLM agents.
+                    </p>
+                    <p>
+                        My messages are always open — feel free to reach out if you're interested in talking about
+                        reinforcement learning, agentic systems, robotics, or anything in between!
+                    </p>
+                </div>
+                <nav class="links">
+                    <a href="mailto:ishirgarg@berkeley.edu">Email</a>
+                    <a href="https://scholar.google.com/citations?user=Rh9bIlYAAAAJ&hl=en" target="_blank"
+                        rel="noopener">Google Scholar</a>
+                    <a href="https://github.com/ishirgarg" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://www.linkedin.com/in/ishir-garg/" target="_blank" rel="noopener">LinkedIn</a>
+                </nav>
+            </div>
+            <img class="photo" src="assets/profile.jpg" alt="Ishir Garg"
+                onerror="this.outerHTML='<div class=&quot;photo&quot;>IG</div>'">
+        </header>
+
+        <!-- ===== News ===== -->
+        <section id="news">
+            <h2>News</h2>
+            <ul class="news">
+                <li><span class="date">May 2026</span><span>Interning at Google this summer! Researching self-improvement of agent
+                        harnesses.</span></li>
+                <li><span class="date">Apr 2026</span><span>Joined PALLAS (Parallel Applications, Libraries, Languages,
+                        Algorithms, and Systems), advised by Kurt Keutzer.</span></li>
+                <li><span class="date">Aug 2025</span><span>Joined the Robotic AI &amp; Learning Lab (RAIL) at BAIR,
+                        advised by Sergey Levine.</span></li>
+            </ul>
+        </section>
+
+        <!-- ===== Publications ===== -->
+        <section id="publications">
+            <h2>Publications</h2>
+
+            <div class="pub">
+                <div class="pub-thumb">MemFail</div>
+                <div class="pub-body">
+                    <p class="pub-title">MemFail: Stress-Testing Failure Modes of LLM Memory Systems<span
+                            class="tag">Under Review</span></p>
+                    <p class="pub-authors"><span class="me">Ishir Garg</span>, Neel Kolhe, Dawn Song, Xuandong Zhao</p>
+                    <p class="pub-venue">Preprint, 2026</p>
+                    <p class="pub-links">
+                        <a href="https://arxiv.org/abs/2605.26667" target="_blank" rel="noopener">arXiv</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="pub">
+                <div class="pub-thumb">InfoSynth</div>
+                <div class="pub-body">
+                    <p class="pub-title">InfoSynth: Information-Guided Benchmark Synthesis for LLMs<span class="tag">Under
+                            Review</span></p>
+                    <p class="pub-authors"><span class="me">Ishir Garg</span>, Neel Kolhe, Xuandong Zhao, Dawn Song</p>
+                    <p class="pub-venue">Preprint, 2026</p>
+                    <p class="pub-links">
+                        <a href="https://arxiv.org/abs/2601.00575" target="_blank" rel="noopener">arXiv</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="pub">
+                <div class="pub-thumb">FOPNG</div>
+                <div class="pub-body">
+                    <p class="pub-title">Fisher-Orthogonal Projected Natural Gradient for Continual Learning<span
+                            class="tag">Under Review</span></p>
+                    <p class="pub-authors"><span class="me">Ishir Garg</span>, Neel Kolhe, Andy Peng, Rohan Gopalam</p>
+                    <p class="pub-venue">Preprint, 2026</p>
+                    <p class="pub-links">
+                        <a href="https://arxiv.org/abs/2601.12816" target="_blank" rel="noopener">arXiv</a>
+                    </p>
+                </div>
             </div>
         </section>
-    </main>
 
-    <footer
-        class="max-w-6xl mx-auto px-4 pb-10 pt-6 text-sm text-gray-500 dark:text-gray-400">
-        <p>&copy; <span id="year"></span> Ishir Garg. All rights reserved.</p>
-    </footer>
+        <!-- ===== Research ===== -->
+        <section id="research">
+            <h2>Research</h2>
+            <ul class="cv">
+                <li><span class="cv-date">2026 –</span><span class="cv-role">Berkeley AI Research</span><span
+                        class="cv-org">Prof. Kurt Keutzer</span></li>
+                <li><span class="cv-date">2025 –</span><span class="cv-role">Berkeley AI Research (RAIL)</span><span
+                        class="cv-org">Prof. Sergey Levine</span></li>
+                <li><span class="cv-date">2025 –</span><span class="cv-role">Berkeley AI Research</span><span
+                        class="cv-org">Prof. Dawn Song</span></li>
+            </ul>
+        </section>
+
+        <!-- ===== Industry ===== -->
+        <section id="experience">
+            <h2>Industry</h2>
+            <ul class="cv">
+                <li><span class="cv-date">2026 –</span><span class="cv-role">Google</span><span class="cv-org">ML
+                        Engineering, Workspace GenAI</span></li>
+                <li><span class="cv-date">2026 –</span><span class="cv-role">Narada AI</span><span class="cv-org">Founding
+                        ML Engineer</span></li>
+                <li><span class="cv-date">2025</span><span class="cv-role">Roblox</span><span class="cv-org">Software
+                        Engineering Intern</span></li>
+                <li><span class="cv-date">2024</span><span class="cv-role">Apple</span><span class="cv-org">Software
+                        Engineering Intern</span></li>
+            </ul>
+        </section>
+
+        <!-- ===== Awards ===== -->
+        <section id="awards">
+            <h2>Awards</h2>
+            <ul class="awards">
+                <li>Putnam Mathematical Competition — Top 300 (top 6% nationally)</li>
+                <li>USA Mathematical Olympiad (USAMO) qualifier — top 250 nationally</li>
+                <li>USA Computing Olympiad — Silver Medal</li>
+            </ul>
+        </section>
+
+        <footer>
+            © <span id="year"></span> Ishir Garg
+        </footer>
+    </div>
 
     <script>
-        // Project list
-        const projects = [
-            {
-                title: "Project 0: Camera & Perspective",
-                href: "projects/proj0/proj0.html",
-                desc: "Learn about perspective, focal length, and projection by taking photos.",
-                updated: "2025-09-01"
-            },
-            {
-                title: "Project 1: Images of the Russian Empire",
-                href: "projects/proj1/proj1.html",
-                desc: "Learn about reconstructing RGB images from channels and classical image-processing techniques",
-                updated: "2025-09-08"
-            },
-            {
-                title: "Project 2: Fun with Filters and Frequencies",
-                href: "projects/proj2/proj2.html",
-                desc: "Implement convolution, edge detection, sharpening, hybrid images, and multi-resolution blending.",
-                updated: "2025-09-26"
-            },
-            {
-                title: "Project 3: Image Warping and Mosaicing",
-                href: "projects/proj3/proj3.html",
-                desc: "Utilize homographies to create mosaics from source images.",
-                updated: "2025-09-26"
-            },
-            {
-                title: "Project 4: Neural Radiance Fields",
-                href: "projects/proj4/proj4.html",
-                desc: "Train a NeRF to synthesize novel views of a scene.",
-                updated: "2025-11-13"
-            },
-            {
-                title: "Project 5: Fun with Diffusion Models!",
-                href: "projects/proj5/proj5.html",
-                desc: "Experimenting with diffusion and flow models",
-                updated: "2025-11-13"
-            },
-
-        ];
-
-        const grid = document.getElementById("grid");
-        function formatDate(iso) {
-            try {
-                const d = new Date(iso + 'T00:00:00');
-                return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-            } catch { return iso; }
-        }
-
-        function cardHTML(p) {
-            return `
-        <a href="${p.href}" class="card block rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 p-5 shadow-soft focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <div class="flex items-start justify-between gap-3">
-            <h3 class="text-lg font-semibold leading-tight">${p.title}</h3>
-            <svg class="h-5 w-5 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-          </div>
-          <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">${p.desc || ''}</p>
-          <div class="mt-4 text-xs text-gray-500 dark:text-gray-400">Updated ${formatDate(p.updated || '')}</div>
-        </a>`;
-        }
-
-        function renderCards(list) {
-            grid.innerHTML = list.map(cardHTML).join('');
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderCards(projects);
-            document.getElementById('year').textContent = new Date().getFullYear();
-        });
+        document.getElementById('year').textContent = new Date().getFullYear();
     </script>
 </body>
 
