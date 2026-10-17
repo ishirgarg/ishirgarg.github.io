@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+<rect width="300" height="200" fill="#eef3f9"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563a8"/></marker><marker id="m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa3b2"/></marker></defs>
+<ellipse cx="215" cy="92" rx="26" ry="11" transform="rotate(24 215 92)" fill="none" stroke="#2563a8" stroke-opacity="0.55" stroke-width="1.4"/>
+<ellipse cx="215" cy="92" rx="52" ry="22" transform="rotate(24 215 92)" fill="none" stroke="#2563a8" stroke-opacity="0.46" stroke-width="1.4"/>
+<ellipse cx="215" cy="92" rx="80" ry="34" transform="rotate(24 215 92)" fill="none" stroke="#2563a8" stroke-opacity="0.37" stroke-width="1.4"/>
+<ellipse cx="215" cy="92" rx="110" ry="47" transform="rotate(24 215 92)" fill="none" stroke="#2563a8" stroke-opacity="0.28" stroke-width="1.4"/>
+<ellipse cx="215" cy="92" rx="142" ry="61" transform="rotate(24 215 92)" fill="none" stroke="#2563a8" stroke-opacity="0.19" stroke-width="1.4"/>
+<line x1="12.5" y1="192.8" x2="271.0" y2="98.7" stroke="#0f2f57" stroke-width="2" stroke-dasharray="6 5" stroke-opacity="0.55"/>
+<line x1="168.0" y1="35.1" x2="97.5" y2="60.7" stroke="#9aa3b2" stroke-width="1.6" stroke-dasharray="2 4"/>
+<line x1="130" y1="150" x2="168.0" y2="35.1" stroke="#9aa3b2" stroke-width="3" marker-end="url(#m)"/>
+<line x1="130" y1="150" x2="97.5" y2="60.7" stroke="#2563a8" stroke-width="4" marker-end="url(#a)"/>
+<polyline points="140.3,146.2 136.6,135.9 126.2,139.7" fill="none" stroke="#0f2f57" stroke-width="1.5"/>
+<circle cx="130" cy="150" r="4.5" fill="#0f2f57"/>
+</svg>

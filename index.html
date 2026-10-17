@@ -169,19 +169,19 @@
 
         .pub-thumb {
             flex-shrink: 0;
-            width: 116px;
-            height: 78px;
+            width: 150px;
+            height: 100px;
             border-radius: 8px;
             background: var(--accent-soft);
             border: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent);
-            font-family: "Newsreader", Georgia, serif;
-            font-size: 1.05rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
+            overflow: hidden;
+        }
+
+        .pub-thumb img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .pub-body {
@@ -320,7 +320,9 @@
 
             .pub-thumb {
                 width: 100%;
-                height: 64px;
+                max-width: 200px;
+                height: auto;
+                aspect-ratio: 3 / 2;
             }
 
             .news li {
@@ -399,7 +401,7 @@
             <h2>Publications</h2>
 
             <div class="pub">
-                <div class="pub-thumb">E4E</div>
+                <div class="pub-thumb"><img src="assets/pubs/e4e.jpg" alt="Learned empowerment map over an AntMaze environment" loading="lazy"></div>
                 <div class="pub-body">
                     <p class="pub-title">Measuring Empowerment from Offline Data for Intrinsically Motivated Exploration<span
                             class="tag">Under Review</span></p>
@@ -410,7 +412,7 @@
             </div>
 
             <div class="pub">
-                <div class="pub-thumb">MemFail</div>
+                <div class="pub-thumb"><img src="assets/pubs/memfail.svg" alt="Conversation flowing into a memory store and retrieval, with failure points marked" loading="lazy"></div>
                 <div class="pub-body">
                     <p class="pub-title">MemFail: Stress-Testing Failure Modes of LLM Memory Systems</p>
                     <p class="pub-authors"><span class="me">Ishir Garg</span>, Neel Kolhe, Dawn Song, Xuandong Zhao</p>
@@ -422,7 +424,7 @@
             </div>
 
             <div class="pub">
-                <div class="pub-thumb">InfoSynth</div>
+                <div class="pub-thumb"><img src="assets/pubs/infosynth.svg" alt="Seed problems expanding into novel, diverse clusters of generated problems" loading="lazy"></div>
                 <div class="pub-body">
                     <p class="pub-title">InfoSynth: Information-Guided Benchmark Synthesis for LLMs</p>
                     <p class="pub-authors"><span class="me">Ishir Garg</span>, Neel Kolhe, Xuandong Zhao, Dawn Song</p>
@@ -435,7 +437,7 @@
             </div>
 
             <div class="pub">
-                <div class="pub-thumb">FOPNG</div>
+                <div class="pub-thumb"><img src="assets/pubs/fopng.svg" alt="Gradient projected orthogonally to previous-task directions over Fisher contours" loading="lazy"></div>
                 <div class="pub-body">
                     <p class="pub-title">Fisher-Orthogonal Projected Natural Gradient for Continual Learning<span
                             class="tag">Under Review</span></p>
